@@ -10,8 +10,9 @@ Radar::Radar(const int &baud, const int &usbPort, const int &fieldOfView):
 
 }
 
-void Radar::fieldOfViewInterface(int itemSelect)
+void Radar::fieldOfViewInterface()
 {
+    int itemSelect;
     cout << "Select field of view, enter 1 to 2: " << endl;
     cout << "1. 20 degree" << endl
          << "2. 40 degree" << endl;

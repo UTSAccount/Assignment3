@@ -1,5 +1,7 @@
 #include"Ranger.h"
 
+
+// Constructor taking values to set private members in ranger class, this constructor is for inherented class only
 Ranger::Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
         const double &max, const double &min, const int &dataRate)
         : model_(model), baud_(baud), usbPort_(usbPort), fieldOfView_(fieldOfView), max_(max), min_(min), dataRate_(dataRate)
@@ -19,11 +21,13 @@ void Ranger::setUsbPort(int usbPort)
     usbPort_ = usbPort;
 }
 
+// Set baud rate
 void Ranger::setBaud(int baud)
 {
     baud_ = baud;
 }
 
+// Obtain baud rate
 int Ranger::getBaud()
 {
    return baud_;
@@ -35,34 +39,39 @@ int Ranger::getFieldOfView()
     return fieldOfView_;
 }
 
-//
+// Obtain usb port number
 int Ranger::getUsbPort()
 {
     return usbPort_;
 }
 
+// return sampled data
 vector<double> Ranger::getData()
 {
     return data_;
 }
 
+// obtain maximum range of called sensor
 double Ranger::getMax()
 {
     return max_;
 }
 
+// obtain minimum range of called sensor
 double Ranger::getMin()
 {
     return min_;
 }
 
-int Ranger::getDataRate()
+// Obtain the rate of sampling data
+double Ranger::getDataRate()
 {
     return dataRate_;
 }
 
-void Ranger::baudRateInterface(double itemSelect)
+void Ranger::baudRateInterface()
 {
+    int itemSelect;
     cout << "Select baud rate, enter 1 to 2: " << endl;
     cout << "1. 38400" << endl << "2. 115200" << endl;
     while(cin >> itemSelect){
@@ -78,8 +87,9 @@ void Ranger::baudRateInterface(double itemSelect)
 }
 
 
-void Ranger::usbPortInterface(double itemSelect)
+void Ranger::usbPortInterface()
 {
+    int itemSelect;
     cout << "Select USB port, enter 0 to 2: " << endl;
     while(cin >> itemSelect)
     {
@@ -99,16 +109,16 @@ void Ranger::getConfiguration()
     cout << "Field of view: " << fieldOfView_ << endl;
     cout << "Maximum distance: " << max_ << " meters" << endl;
     cout << "Minimum distance: " << min_ << " meters" << endl;
-    cout << "Data rate: " << dataRate_ << endl;
+    cout << "Data rate: " << dataRate_ << " Hz" << endl << endl;
 
 }
 
 void Ranger::configurationInterface()
 {
-    int menuSelect;
-    int itemSelect;
-        // Select from menu to configure
+    int menuSelect = 0;
+        // Select from menu to configure corresponding setting
         while (menuSelect!=5){
+            cout << model_ << " configuration menu" << endl;
             cout << "select item to modify, enter 1 to 8:" << endl;
             cout << "1. Baud rate" << endl
                  << "2. USB port" << endl
@@ -119,21 +129,20 @@ void Ranger::configurationInterface()
             if(menuSelect > 0 && menuSelect < 5){
                 switch(menuSelect){
 
-                // Sensor configuration interfacing
+                // Navigate to baud rate selection menu
                 case 1:
-                    baudRateInterface(itemSelect);
+                    baudRateInterface();
                     break;
 
-                // Set USB port
+                // Navigate to USB port selection menu
                 case 2:
-                    usbPortInterface(itemSelect);
+                    usbPortInterface();
                     break;
-
+                // Navigate to field of view selection menu
                 case 3:
-                    // Set field of view
-                    fieldOfViewInterface(itemSelect);
+                    fieldOfViewInterface();
                     break;
-
+                // Display current configuration of current sensor
                 case 4:
                     getConfiguration();
                     break;
@@ -154,12 +163,17 @@ void Ranger::configurationInterface()
 
 void Ranger::sampleData()
 {
+    this_thread::sleep_for(chrono::milliseconds(int((1/dataRate_)*1000)));
     double tempData = 0;
     double omega = 2*pi*0.05;
-    unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-    default_random_engine engine(seed);
-    normal_distribution<double> gaussianNoise(mean,standardDeviation);
-    double delta = gaussianNoise(engine);
-    tempData = 6 + (4 * sin(omega)) + delta;
-    data_.push_back(tempData);
+    while ((tempData < min_) || (tempData > max_))
+    {
+        unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+        default_random_engine engine(seed);
+        normal_distribution<double> gaussianNoise(mean,standardDeviation);
+        double delta = gaussianNoise(engine);
+        tempData = 6 + (4 * sin(omega+seed)) + delta;
+    }
+//    data_.push_back(tempData);
+    cout <<  tempData;
 }

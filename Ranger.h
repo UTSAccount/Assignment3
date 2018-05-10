@@ -7,7 +7,8 @@
 #include <chrono>
 #include <iostream>
 #include <string>
-
+#include <chrono>
+#include <thread>
 #define pi 3.1415
 #define mean 0
 #define standardDeviation 0.1
@@ -26,7 +27,7 @@ protected:
     int baud_;
     double max_;
     double min_;
-    int dataRate_;
+    double dataRate_;
     Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
             const double &max, const double &min, const int &dataRate);
 public:
@@ -40,14 +41,14 @@ public:
     void setUsbPort(int);
     double getMax();
     double getMin();
-    int getDataRate();
+    double getDataRate();
     vector<double> getData();
     void sampleData(void);
 
     // Userinterface for sensor configuration
-    virtual void fieldOfViewInterface(int) = 0;
-    void baudRateInterface(double);
-    void usbPortInterface(double);
+    virtual void fieldOfViewInterface() = 0;
+    void baudRateInterface();
+    void usbPortInterface();
     void getConfiguration();
     void configurationInterface();
 };

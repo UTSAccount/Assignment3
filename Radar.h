@@ -8,7 +8,7 @@ class Radar : public Ranger
 public:
     Radar();
     Radar(const int &baud, const int &usbPort, const int &fieldOfView);
-    void fieldOfViewInterface(int);
+    void fieldOfViewInterface();
 };
 
 
