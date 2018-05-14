@@ -46,7 +46,7 @@ int Ranger::getUsbPort()
 }
 
 // return sampled data
-vector<double> Ranger::getData()
+deque<double> Ranger::getSensorData()
 {
     return data_;
 }
@@ -69,20 +69,26 @@ double Ranger::getDataRate()
     return dataRate_;
 }
 
+
 void Ranger::baudRateInterface()
 {
+    // declare input variable for cin
     int itemSelect;
+    // List of valid options for setting baud rate
     cout << "Select baud rate, enter 1 to 2: " << endl;
     cout << "1. 38400" << endl << "2. 115200" << endl;
     while(cin >> itemSelect){
+        // if user selected a valid option, break out of loop
         if(itemSelect < 3 && itemSelect > 0)
             break;
         cout << "Invalid input, please enter again." << endl << endl;
     }
+    // Set the baud rate base on valid option from user
     if(itemSelect == 1)
         setBaud(38400);
     else
         setBaud(115200);
+    // Give feedback on which baud rate is been set
     cout << "Baud rate is set to "  << getBaud() << endl << endl;
 }
 
@@ -133,7 +139,6 @@ void Ranger::configurationInterface()
                 case 1:
                     baudRateInterface();
                     break;
-
                 // Navigate to USB port selection menu
                 case 2:
                     usbPortInterface();
@@ -161,7 +166,15 @@ void Ranger::configurationInterface()
         return;
 }
 
-void Ranger::sampleData()
+void Ranger::containerManagement(int numberLimit)
+{
+    if(data_.size() > numberLimit)
+        data_.pop_back();
+    if(dataTime_.size() > numberLimit)
+        dataTime_.pop_back();
+}
+
+void Ranger::sampleData(chrono::steady_clock::time_point &timeInit)
 {
     cout << model_<< ": ";
     double tempData = 0;
@@ -174,5 +187,8 @@ void Ranger::sampleData()
         double delta = gaussianNoise(engine);
         tempData = 6 + (4 * sin(omega+seed)) + delta;
     }
-    cout <<  tempData << endl;
+    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+    double time = (t2-timeInit).count();
+    data_.push_front(tempData);
+    dataTime_.push_front(time);
 }

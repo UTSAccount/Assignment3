@@ -12,9 +12,13 @@
 #include "Sonar.h"
 #include "DataFusion.h"
 
+#define fusionRate 200
 using namespace std;
 
+
+
 void sampleSensor(Ranger&);
+
 
 
 #endif

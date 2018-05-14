@@ -1,7 +1,7 @@
 #ifndef RANGER_H
 #define RANGER_H
 
-#include <vector>
+#include <deque>
 #include <random>
 #include <math.h>
 #include <chrono>
@@ -23,35 +23,53 @@ private:
 protected:
     string model_;
     int fieldOfView_;
-    vector<double> data_;
+    deque<double> data_;
+    deque<double> dataTime_;
     int usbPort_;
     int baud_;
     double max_;
     double min_;
     double dataRate_;
-    mutex mtx_;
     Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
             const double &max, const double &min, const int &dataRate);
 public:
+    // Obtain model number of sensor
     string getModel(void);
+    // Obtain field of view of sensor
     int getFieldOfView();
+    // Set field of view
     void setFieldOfView(int);
-    vector<double> getSensorData();
+    // Obtain stored sensor data
+    deque<double> getSensorData();
+    // Obtain baud rate
     int getBaud();
+    // Set baud rate
     void setBaud(int);
+    // Obtain usb port
     int getUsbPort();
+    // Set sensor usb port
     void setUsbPort(int);
+    // Get maximum distance value of the sensor
     double getMax();
+    // Get minimum distance value of the sensor
     double getMin();
+    // Get rate of sampling a sensor data
     double getDataRate();
-    vector<double> getData();
-    void sampleData();
+    // Generate sensor data with r= 6 + (4 * sin(wt) + sigma
+    // Where w = 2*pi*f (f=0.05Hz)
+    void sampleData(chrono::_V2::steady_clock::time_point &timeInit);
+
+    void containerManagement(int);
 
     // Userinterface for sensor configuration
     virtual void fieldOfViewInterface() = 0;
+    // User menu for baud rate configuration
     void baudRateInterface();
+    // User menu for usb port configuration
     void usbPortInterface();
+    // Generate a list of current configuration on current data in cmd
     void getConfiguration();
+    // User menu consist of field of view, baud rate and usb port configuration interface
     void configurationInterface();
 };
 

@@ -12,7 +12,7 @@ private:
 public:
     DataFusion(const int &fusionMethod);
     DataFusion();
-    vector<double> fuseSensorData();
+    double fuseSensorData(vector<Ranger *> &rangers);
     // Data fusion user interface for change fusion method
     void dataFusionInterface();
 };

@@ -35,11 +35,15 @@ void DataFusion::dataFusionInterface()
         fusionMethod_ = 2;
         cout << "Minimum" << endl;
     }
-
     else
     {
         fusionMethod_ = 3;
         cout << "Average" << endl;
     }
     return;
+}
+
+double DataFusion::fuseSensorData(vector<Ranger*> &rangers)
+{
+
 }
