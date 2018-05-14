@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <mutex>
 #include <thread>
 #define pi 3.1415
 #define mean 0
@@ -28,6 +29,7 @@ protected:
     double max_;
     double min_;
     double dataRate_;
+    mutex mtx_;
     Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
             const double &max, const double &min, const int &dataRate);
 public:
@@ -43,7 +45,7 @@ public:
     double getMin();
     double getDataRate();
     vector<double> getData();
-    void sampleData(void);
+    void sampleData();
 
     // Userinterface for sensor configuration
     virtual void fieldOfViewInterface() = 0;

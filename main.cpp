@@ -1,32 +1,29 @@
 #include "main.h"
-#include <thread>
 
 
-void sensorSampling(Ranger &sensor, string thread, mutex &mtx)
+
+void sensorSampling(Ranger &radar, mutex &mtx)
 {
 
     while(1)
     {
-        unique_lock<mutex> lock(mtx);
-        cout << thread << ": ";
-        sensor.sampleData();
-        cout << endl;
+        this_thread::sleep_for(chrono::milliseconds(int((1/radar.getDataRate())*1000)));
+        unique_lock<mutex> lck(mtx);
+        radar.sampleData();
     }
 }
 
-void printDuck()
+void dataFusion(DataFusion &fusion)
 {
-    cout << "duck" << endl;
+
 }
+
 
 int main()
 {
     mutex mtx;
-    // initialize starting time
-    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    cout << seed << endl;
-    cout << seed * chrono::milliseconds::period::num / chrono::milliseconds::period::den << endl;
-    // Default initialise sensor objects
+
+    // Default initialise sensor and data fusion objects
     Radar radar;
     Sonar sonar;
     DataFusion fusion;
@@ -39,15 +36,14 @@ int main()
     sonar.configurationInterface();
     fusion.dataFusionInterface();
 
-
     // Initialize thread for sensor data sampling and data fusion
-    std::thread sonarDataCollect(sensorSampling,ref(sonar),"sonar sensor", ref(mtx));
-    std::thread radarDataCollect(sensorSampling,ref(radar),"radar sensor", ref(mtx));
+    thread sonarSamplingThread(sensorSampling,ref(sonar),ref(mtx));
+    thread radarSamplingThread(sensorSampling,ref(radar),ref(mtx));
 
 
     // Wait for thread to finish
-    sonarDataCollect.join();
-    radarDataCollect.join();
+    sonarSamplingThread.join();
+    radarSamplingThread.join();
 
 
 }

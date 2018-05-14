@@ -163,7 +163,7 @@ void Ranger::configurationInterface()
 
 void Ranger::sampleData()
 {
-    this_thread::sleep_for(chrono::milliseconds(int((1/dataRate_)*1000)));
+    cout << model_<< ": ";
     double tempData = 0;
     double omega = 2*pi*0.05;
     while ((tempData < min_) || (tempData > max_))
@@ -174,6 +174,5 @@ void Ranger::sampleData()
         double delta = gaussianNoise(engine);
         tempData = 6 + (4 * sin(omega+seed)) + delta;
     }
-//    data_.push_back(tempData);
-    cout <<  tempData;
+    cout <<  tempData << endl;
 }

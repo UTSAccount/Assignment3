@@ -16,4 +16,5 @@ using namespace std;
 
 void sampleSensor(Ranger&);
 
+
 #endif
