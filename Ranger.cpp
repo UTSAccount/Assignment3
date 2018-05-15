@@ -51,6 +51,12 @@ deque<double> Ranger::getSensorData()
     return data_;
 }
 
+// return time frame of sampled data
+deque<double> Ranger::getSensorDataTime()
+{
+    return dataTime_;
+}
+
 // obtain maximum range of called sensor
 double Ranger::getMax()
 {

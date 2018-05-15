@@ -12,7 +12,7 @@ private:
 public:
     DataFusion(const int &fusionMethod);
     DataFusion();
-    double fuseSensorData(vector<Ranger *> &rangers);
+    double fuseSensorData(vector<Ranger *> &rangers, chrono::_V2::steady_clock::time_point &timeInit);
     // Data fusion user interface for change fusion method
     void dataFusionInterface();
 };

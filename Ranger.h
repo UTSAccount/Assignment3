@@ -41,6 +41,8 @@ public:
     void setFieldOfView(int);
     // Obtain stored sensor data
     deque<double> getSensorData();
+    // Get time frame of gathered sensor data
+    deque<double> getSensorDataTime();
     // Obtain baud rate
     int getBaud();
     // Set baud rate
