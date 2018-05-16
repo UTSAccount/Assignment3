@@ -29,7 +29,11 @@ protected:
     int baud_;
     double max_;
     double min_;
-    double dataRate_;
+    int dataRate_;
+    // mutex use for locking data when process data using threading
+    mutex mutex_;
+    // initTime is initialised when object is created to obtain data time when sampled
+    chrono::steady_clock::time_point initTime_;
     Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
             const double &max, const double &min, const int &dataRate);
 public:
@@ -56,13 +60,12 @@ public:
     // Get minimum distance value of the sensor
     double getMin();
     // Get rate of sampling a sensor data
-    double getDataRate();
+    int getDataRate();
     // Generate sensor data with r= 6 + (4 * sin(wt) + sigma
     // Where w = 2*pi*f (f=0.05Hz)
-    void sampleData(chrono::_V2::steady_clock::time_point &timeInit);
-
+    void sampleData();
+    // Limit number of element in container of ranger class to input number
     void containerManagement(int);
-
     // Userinterface for sensor configuration
     virtual void fieldOfViewInterface() = 0;
     // User menu for baud rate configuration

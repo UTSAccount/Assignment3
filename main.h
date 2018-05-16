@@ -12,7 +12,7 @@
 #include "Sonar.h"
 #include "DataFusion.h"
 
-#define fusionRate 200
+#define MAX_NUM_DATA 5
 using namespace std;
 
 

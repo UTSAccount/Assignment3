@@ -1,13 +1,17 @@
 #include "DataFusion.h"
 
-DataFusion::DataFusion(const int &fusionMethod): fusionMethod_(fusionMethod){
-
+DataFusion::DataFusion(const int &fusionMethod, const int &processMethod, const int &fusionRate):
+    fusionMethod_(fusionMethod), processMethod_(fusionMethod), fusionRate_(fusionRate)
+{
+    initTime_ = chrono::steady_clock::now();
 }
 
 DataFusion::DataFusion()
 {
     fusionMethod_ = 1;
     processMethod_ = 1;
+    fusionRate_ = 200;
+    initTime_ = chrono::steady_clock::now();
 }
 
 int DataFusion::getFusionMethod()
@@ -20,14 +24,21 @@ int DataFusion::getProcessMethod()
     return processMethod_;
 }
 
+int DataFusion::getFusionRate()
+{
+    return fusionRate_;
+}
+
 void DataFusion::dataFusionInterface()
 {
     int itemSelect;
+    // List of valid options for setting data fusion method
     cout << "Select data fusion method, enter 1 to 3: " << endl;
     cout << "1. Maximum" << endl
          << "2. Minimum" << endl
          << "3. Average" << endl;
     while(cin >> itemSelect){
+        // if user selected a valid option, break out of loop
         if(itemSelect > 0 && itemSelect < 4)
             break;
         cout << "Invalid input, please enter again." << endl;
@@ -51,12 +62,14 @@ void DataFusion::dataFusionInterface()
         fusionMethod_ = 3;
         cout << "Average" << endl;
     }
+    cout << endl;
     return;
 }
 
 void DataFusion::processMethodInterface()
 {
     int itemSelect;
+    // List of valid options for setting data processing method
     cout << "Select data fusion method, enter 1 to 2: " << endl;
     cout << "1. Fuse data every 5Hz" << endl
          << "2. Fuse data when new sensor data arrive" << endl;
@@ -66,24 +79,23 @@ void DataFusion::processMethodInterface()
         cout << "Invalid input, please enter again." << endl;
     }
 
-    // Set and display configured fusion method
+    // Set and display configured data processing method
     cout << "Process method is set to " ;
     if(itemSelect == 1)
     {
         processMethod_ = 1;
         cout << "update every 5Hz" << endl;
     }
-
     else if (itemSelect == 2)
     {
         processMethod_ = 2;
         cout << "updata every new sensor data" << endl;
     }
-
+    cout << endl;
     return;
 }
 
-double DataFusion::fuseSensorData(vector<Ranger*> &rangers, chrono::steady_clock::time_point &timeInit)
+double DataFusion::fuseSensorData(vector<Ranger*> &rangers)
 {
 
     // Create variables to temperary hold data to be compared
@@ -98,6 +110,7 @@ double DataFusion::fuseSensorData(vector<Ranger*> &rangers, chrono::steady_clock
     for(auto &i : rangers)
     {
         cout << "Interpolating data :";
+        // Extract newest two sensor data for interpolation
         double v1 = i->getSensorData()[0];
         cout << v1 << " ";
         double v2 = i->getSensorData()[1];
@@ -106,7 +119,8 @@ double DataFusion::fuseSensorData(vector<Ranger*> &rangers, chrono::steady_clock
         cout << t1 << " ";
         double t2 = i->getSensorDataTime()[1];
         cout << t2 << " ";
-        double t3 = (chrono::steady_clock::now()-timeInit).count();
+        // Obtain current time
+        double t3 = (chrono::steady_clock::now()-initTime_).count();
         cout << "current time: " << t3 << " ";
         // Linearly interpolate current data
         double data = ((v2-v1)/(t2-t1))*(t3-t2)+v2;
@@ -116,6 +130,7 @@ double DataFusion::fuseSensorData(vector<Ranger*> &rangers, chrono::steady_clock
             data = i->getMin();
         if(data > i->getMax())
             data = i->getMax();
+        // Store extrapolated data in a temporary for data fusion
         tempData.push_back(data);
         cout << "Interpolated result: "<< data << endl;
     }

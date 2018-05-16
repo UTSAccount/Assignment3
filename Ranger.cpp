@@ -6,7 +6,6 @@ Ranger::Ranger(const string &model, const int &baud, const int &usbPort, const i
         const double &max, const double &min, const int &dataRate)
         : model_(model), baud_(baud), usbPort_(usbPort), fieldOfView_(fieldOfView), max_(max), min_(min), dataRate_(dataRate)
 {
-
 }
 
 // Set field of view
@@ -70,7 +69,7 @@ double Ranger::getMin()
 }
 
 // Obtain the rate of sampling data
-double Ranger::getDataRate()
+int Ranger::getDataRate()
 {
     return dataRate_;
 }
@@ -101,27 +100,33 @@ void Ranger::baudRateInterface()
 
 void Ranger::usbPortInterface()
 {
+    // declare input variable for cin
     int itemSelect;
+    // List of valid options for setting usb port
     cout << "Select USB port, enter 0 to 2: " << endl;
     while(cin >> itemSelect)
     {
+        // if user selected a valid option, break out of loop
         if(itemSelect >= 0 && itemSelect < 3)
             break;
         cout << "Invalid input, please enter again." << endl;
     }
+    // Set the baud rate base on valid option from user
     usbPort_ = itemSelect;
+    // Give feedback on which baud rate is been set
     cout << "USB port is set to " << usbPort_ << endl << endl;
 }
 
 void Ranger::getConfiguration()
 {
+    // Obtain different sensor configuration and display at terminal as list
     cout << "Model: " << model_ << endl;
     cout << "Baud rate: " << baud_ << endl;
     cout << "Port: " << usbPort_ << endl;
     cout << "Field of view: " << fieldOfView_ << endl;
     cout << "Maximum distance: " << max_ << " meters" << endl;
     cout << "Minimum distance: " << min_ << " meters" << endl;
-    cout << "Data rate: " << dataRate_ << " Hz" << endl << endl;
+    cout << "Data rate: " << dataRate_ << " ms" << endl << endl;
 
 }
 
@@ -137,10 +142,10 @@ void Ranger::configurationInterface()
                  << "3. Field of view" << endl
                  << "4. Review setting" << endl
                  << "5. Exit Configuration" << endl << endl;
+            // User input menu number from terminal
             cin >> menuSelect;
             if(menuSelect > 0 && menuSelect < 5){
                 switch(menuSelect){
-
                 // Navigate to baud rate selection menu
                 case 1:
                     baudRateInterface();
@@ -174,27 +179,56 @@ void Ranger::configurationInterface()
 
 void Ranger::containerManagement(int numberLimit)
 {
+    // If any of the data container goes above the number limit
+    // Erase the oldest data set from both container
+    unique_lock<mutex> lock(mutex_);
     if(data_.size() > numberLimit)
         data_.pop_back();
     if(dataTime_.size() > numberLimit)
         dataTime_.pop_back();
 }
 
-void Ranger::sampleData(chrono::steady_clock::time_point &timeInit)
+void Ranger::sampleData()
 {
-    cout << model_<< ": ";
+    // Set thread to sleep at data sampling rate
+    this_thread::sleep_for(chrono::milliseconds(dataRate_));
+    unique_lock<mutex> lock(mutex_);
+    // Display sampled sensor model number
+    cout << model_<< ": " << endl;
     double tempData = 0;
     double omega = 2*pi*0.05;
+    // Only store data when data is within sensor ranage
     while ((tempData < min_) || (tempData > max_))
     {
+        // Generate a random seed
         unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
         default_random_engine engine(seed);
+        // Use normal distrubution model to generate random number
         normal_distribution<double> gaussianNoise(mean,standardDeviation);
         double delta = gaussianNoise(engine);
+        // Calculate final sensor data
         tempData = 6 + (4 * sin(omega+seed)) + delta;
     }
+    // Obtain time which the sensor is generated
     chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
-    double time = (t2-timeInit).count();
+    double time = (t2-initTime_).count();
+    // Store both data and time to sensor container
     data_.push_front(tempData);
     dataTime_.push_front(time);
+
+    // Display sampled sensor data
+    cout << "Data: ";
+    for(auto i : data_)
+    {
+        cout << i << " ";
+    }
+    cout << endl;
+
+    // Display time frame of sampled sensor data
+    cout << "Time: ";
+    for(auto i : dataTime_)
+    {
+        cout << i << " ";
+    }
+    cout << endl << endl;
 }

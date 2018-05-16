@@ -1,13 +1,14 @@
 #include "Radar.h"
-Radar::Radar():Ranger("RAD-001", 38400, 0, 20, 10, 0.2, 10)
+Radar::Radar():Ranger(RADAR_MODEL_NUM, RADAR_BAUD_RATE, RADAR_USB_PORT, RADAR_FIELD_OF_VIEW
+                      , RADAR_MAX_DISTANCE, RADAR_MIN_DISTANCE, RADAR_DATA_RATE)
 {
-
+    initTime_ = chrono::steady_clock::now();
 }
 
 Radar::Radar(const int &baud, const int &usbPort, const int &fieldOfView):
-      Ranger("RAD-001", baud, usbPort, fieldOfView, 10, 0.2, 10)
+      Ranger(RADAR_MODEL_NUM, baud, usbPort, fieldOfView, RADAR_MAX_DISTANCE, RADAR_MIN_DISTANCE, RADAR_DATA_RATE)
 {
-
+    initTime_ = chrono::steady_clock::now();
 }
 
 void Radar::fieldOfViewInterface()

@@ -2,66 +2,53 @@
 bool dataGenerated = false;
 
 
-void sensorSampling(Ranger &sensor, chrono::steady_clock::time_point& timeInit, mutex &mtx, condition_variable &cv)
+void sensorSampling(Ranger &sensor, condition_variable &cv)
 {
     while(1)
     {
-        // Set thread to sleep at data sampling rate
-        this_thread::sleep_for(chrono::milliseconds(int((1/sensor.getDataRate())*1000)));
-        unique_lock<mutex> lck(mtx);
-        sensor.sampleData(timeInit);
+        // Sample sensor data
+        sensor.sampleData();
+        // Notify other thread that new data is sampled
         cv.notify_all();
+        // Additional variable to notify new data is sampled
         dataGenerated = true;
-        // Display sampled sensor data
-        cout << "Data: ";
-        for(auto i : sensor.getSensorData())
-        {
-            cout << i << " ";
-        }
-        cout << endl;
-
-        // Display time frame of sampled sensor data
-        cout << "Time: ";
-        for(auto i : sensor.getSensorDataTime())
-        {
-            cout << i << " ";
-        }
-        cout << endl << endl;
     }
 }
 
-void dataFusion(DataFusion &fusion, vector<Ranger*> &rangers, chrono::steady_clock::time_point& timeInit, mutex &mtx, condition_variable &cv)
+void dataFusion(DataFusion &fusion, vector<Ranger*> &rangers, mutex &mtx, condition_variable &cv)
 {
     while(1){
         unique_lock<mutex> lck(mtx);
+        // Base on processing method, choose either fuse at 3Hz or at every new data
         if(fusion.getProcessMethod()==1)
         {
+            // Unlock lock to prevent lock while thread is sleeping
             lck.unlock();
-            this_thread::sleep_for(chrono::milliseconds(fusionRate));
+            this_thread::sleep_for(chrono::milliseconds(fusion.getFusionRate()));
             lck.lock();
         }
         else
         {
+            // Wait for other thread to notify there are new data been sampled
             while(!dataGenerated)
             {
                 cv.wait(lck);
             }
         }
-        double data = fusion.fuseSensorData(rangers, timeInit);
+        double data = fusion.fuseSensorData(rangers);
         cout << "fusion output: " << data << endl << endl;
         dataGenerated = false;
     }
 }
 
 // container management must call a ranger function to modify sensor data directly
-void containerManagement(vector<Ranger*> &rangers, mutex &mtx)
+void containerManagement(vector<Ranger*> &rangers)
 {
     while(1)
     {
         for(auto &i : rangers)
         {
-            unique_lock<mutex> lck(mtx);
-            i->containerManagement(5);
+            i->containerManagement(MAX_NUM_DATA);
         }
     }
 }
@@ -71,7 +58,6 @@ int main()
     // Default initialise sensor and data fusion objects
     mutex mtx;
     condition_variable cv;
-    chrono::steady_clock::time_point timeInit = chrono::steady_clock::now();
     Radar radar;
     Sonar sonar;
     Ranger *radarPointer = &radar;
@@ -90,10 +76,10 @@ int main()
     fusion.processMethodInterface();
 
     // Initialize thread for sensor data sampling and data fusion
-    thread sonarSamplingThread(sensorSampling,ref(sonar),ref(timeInit),ref(mtx),ref(cv));
-    thread radarSamplingThread(sensorSampling,ref(radar),ref(timeInit),ref(mtx),ref(cv));
-    thread dataFusionThread(dataFusion,ref(fusion),ref(rangers),ref(timeInit),ref(mtx),ref(cv));
-    thread dataManagementThread(containerManagement, ref(rangers), ref(mtx));
+    thread sonarSamplingThread(sensorSampling,ref(sonar),ref(cv));
+    thread radarSamplingThread(sensorSampling,ref(radar),ref(cv));
+    thread dataFusionThread(dataFusion,ref(fusion),ref(rangers),ref(mtx),ref(cv));
+    thread dataManagementThread(containerManagement, ref(rangers));
 
     // Wait for thread to finish
     dataFusionThread.join();
