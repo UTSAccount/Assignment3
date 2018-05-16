@@ -16,65 +16,122 @@
 
 using namespace std;
 
+/*!
+ * \brief The Ranger class is the parent class of both Radar class and Sonar class
+ * It is responsible to store sensor data, generate sensor data and generate user menu for setting different sensor parrameters.
+ */
+
 class Ranger
 {
 private:
     Ranger();
 protected:
-    string model_;
-    int fieldOfView_;
-    deque<double> data_;
-    deque<double> dataTime_;
-    int usbPort_;
-    int baud_;
-    double max_;
-    double min_;
-    int dataRate_;
-    // mutex use for locking data when process data using threading
-    mutex mutex_;
-    // initTime is initialised when object is created to obtain data time when sampled
-    chrono::steady_clock::time_point initTime_;
+    string model_; /*!< Model number of sensor */
+    int fieldOfView_; /*!< Store field of view */
+    deque<double> data_; /*!< deque container store sensor distance data */
+    deque<double> dataTime_; /*!< deque container stores time when a sensor data is sampled */
+    int usbPort_; /*!< Stores usb port of sensor */
+    int baud_; /*!< Stores baud rate of sensor */
+    double max_; /*!< Stores the maximum distance the sensor can detect */
+    double min_; /*!< Stores the minimum distance the sensor can detect */
+    int dataRate_; /*!< Stores the rate of data sampling in millisecond */
+    mutex mutex_; /*!< Mutex use to lock thread while the thread is accessing data */
+    chrono::steady_clock::time_point initTime_; /*!< initTime is initialised when object is created to obtain data time when sampled */
+    /*!
+     * \brief Ranger class constructor
+     * \param model
+     * \param baud
+     * \param usbPort
+     * \param fieldOfView
+     * \param max
+     * \param min
+     * \param dataRate
+     */
     Ranger(const string &model, const int &baud, const int &usbPort, const int &fieldOfView,
             const double &max, const double &min, const int &dataRate);
 public:
-    // Obtain model number of sensor
-    string getModel(void);
-    // Obtain field of view of sensor
+    /*!
+     * \return model number of sensor
+     */
+    string getModel();
+    /*!
+     * \return Field of view value
+     */
     int getFieldOfView();
-    // Set field of view
-    void setFieldOfView(int);
-    // Obtain stored sensor data
+    /*!
+     * \brief setFieldOfView set field of view of sensor.
+     * \param fieldOfView
+     */
+    void setFieldOfView(int fieldOfView);
+    /*!
+     * \return deque container of sensor data.
+     */
     deque<double> getSensorData();
-    // Get time frame of gathered sensor data
+    /*!
+     * \return deque container of sensor data time.
+     */
     deque<double> getSensorDataTime();
-    // Obtain baud rate
+    /*!
+     * \return baud rate of sensor.
+     */
     int getBaud();
-    // Set baud rate
-    void setBaud(int);
-    // Obtain usb port
+    /*!
+     * \brief setBaud sets the baud rate of sensor.
+     * \param baud
+     */
+    void setBaud(int baud);
+    /*!
+     * \return usb port
+     */
     int getUsbPort();
-    // Set sensor usb port
-    void setUsbPort(int);
-    // Get maximum distance value of the sensor
+    /*!
+     * \brief setUsbPort sets the usb port of sensor.
+     * \param usbPort
+     */
+    void setUsbPort(int usbPort);
+    /*!
+     * \return Maximum distance of sensor.
+     */
     double getMax();
-    // Get minimum distance value of the sensor
+    /*!
+     * \return Minimum distance of sensor.
+     */
     double getMin();
-    // Get rate of sampling a sensor data
+    /*!
+     * \return data rate in millisecond
+     */
     int getDataRate();
-    // Generate sensor data with r= 6 + (4 * sin(wt) + sigma
-    // Where w = 2*pi*f (f=0.05Hz)
+    //
+    /*!
+     * \brief sampleData Generate sensor data with r= 6 + (4 * sin(wt) + sigma
+     * Where w = 2*pi*f (f=0.05Hz)
+     */
     void sampleData();
-    // Limit number of element in container of ranger class to input number
-    void containerManagement(int);
-    // Userinterface for sensor configuration
+    //
+    /*!
+     * \brief containerManagement limit number of element in container of ranger class to input number
+     * \param limitNumber
+     */
+    void containerManagement(int limitNumber);
+    /*!
+     * \brief fieldOfViewInterface is virtual function of Ranger class.
+     */
     virtual void fieldOfViewInterface() = 0;
-    // User menu for baud rate configuration
+    /*!
+     * \brief baudRateInterface generate a user menu for configuring the baud rate of sensor.
+     */
     void baudRateInterface();
-    // User menu for usb port configuration
+    /*!
+     * \brief usbPortInterface generate a user menu for configuring the usb port of sensor.
+     */
     void usbPortInterface();
-    // Generate a list of current configuration on current data in cmd
+    /*!
+     * \brief getConfiguration generate a list of current sensor configurations
+     */
     void getConfiguration();
-    // User menu consist of field of view, baud rate and usb port configuration interface
+    /*!
+     * \brief configurationInterface generate a comprehenisve menu that is capable of select and set all the configurable parameters of a ranger sensor.
+     */
     void configurationInterface();
 };
 

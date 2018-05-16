@@ -177,14 +177,14 @@ void Ranger::configurationInterface()
         return;
 }
 
-void Ranger::containerManagement(int numberLimit)
+void Ranger::containerManagement(int limitNumber)
 {
     // If any of the data container goes above the number limit
     // Erase the oldest data set from both container
     unique_lock<mutex> lock(mutex_);
-    if(data_.size() > numberLimit)
+    if(data_.size() > limitNumber)
         data_.pop_back();
-    if(dataTime_.size() > numberLimit)
+    if(dataTime_.size() > limitNumber)
         dataTime_.pop_back();
 }
 

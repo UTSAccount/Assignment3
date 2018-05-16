@@ -11,13 +11,27 @@
 #define RADAR_MIN_DISTANCE 0.2
 #define RADAR_DATA_RATE 100
 
+/*!
+ * \brief The Radar class is the radar sensor inherited from Ranger class
+ */
+
 class Radar : public Ranger
 {
 public:
-    // Default constructor of Radar class
+    /*!
+     * \brief Radar default constructor
+     */
     Radar();
-    // Constructor of Radar class
+    /*!
+     * \brief Radar constructor
+     * \param baud
+     * \param usbPort
+     * \param fieldOfView
+     */
     Radar(const int &baud, const int &usbPort, const int &fieldOfView);
+    /*!
+     * \brief fieldOfViewInterface generate user menu for setting field of view.
+     */
     void fieldOfViewInterface();
 };
 
