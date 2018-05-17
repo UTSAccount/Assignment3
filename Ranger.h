@@ -10,6 +10,7 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+#include <condition_variable>
 #define pi 3.1415
 #define mean 0
 #define standardDeviation 0.1
@@ -101,12 +102,13 @@ public:
      * \return data rate in millisecond
      */
     int getDataRate();
-    //
     /*!
-     * \brief sampleData Generate sensor data with r= 6 + (4 * sin(wt) + sigma
+     * \brief sampleData generate sensor data with r= 6 + (4 * sin(wt) + sigma
      * Where w = 2*pi*f (f=0.05Hz)
+     * \param cv
+     * \param dataGenerated
      */
-    void sampleData();
+    void sampleData(condition_variable &cv, bool &dataGenerated);
     //
     /*!
      * \brief containerManagement limit number of element in container of ranger class to input number

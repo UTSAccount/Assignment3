@@ -3,6 +3,7 @@
 DataFusion::DataFusion(const int &fusionMethod, const int &processMethod, const int &fusionRate):
     fusionMethod_(fusionMethod), processMethod_(fusionMethod), fusionRate_(fusionRate)
 {
+    //Initialize current time
     initTime_ = chrono::steady_clock::now();
 }
 
@@ -14,16 +15,19 @@ DataFusion::DataFusion()
     initTime_ = chrono::steady_clock::now();
 }
 
+// Getter function to obtain fusion method
 int DataFusion::getFusionMethod()
 {
     return fusionMethod_;
 }
 
+// Getter function to obtain process method
 int DataFusion::getProcessMethod()
 {
     return processMethod_;
 }
 
+// Getter function to obtain fusion rate in milliseconds
 int DataFusion::getFusionRate()
 {
     return fusionRate_;
@@ -51,7 +55,6 @@ void DataFusion::dataFusionInterface()
         fusionMethod_ = 1;
         cout << "Maximum" << endl;
     }
-
     else if (itemSelect == 2)
     {
         fusionMethod_ = 2;
@@ -95,76 +98,99 @@ void DataFusion::processMethodInterface()
     return;
 }
 
-double DataFusion::fuseSensorData(vector<Ranger*> &rangers)
+void DataFusion::fuseSensorData(vector<Ranger*> &rangers, condition_variable &cv, bool &dataGenerated)
 {
 
-    // Create variables to temperary hold data to be compared
-    vector<double> tempData;
-    double maxValue = 0;
-    double minValue = 999;
-    double averageValue = 0;
-
-    // Cycle through each sensor to obtain first two sensor data
-    // Extrapolate using two set of data to obtain current data
-    cout << "Interpolating: " << endl;
-    for(auto &i : rangers)
+    while(1)
     {
-        cout << "Interpolating data :";
-        // Extract newest two sensor data for interpolation
-        double v1 = i->getSensorData()[0];
-        cout << v1 << " ";
-        double v2 = i->getSensorData()[1];
-        cout << v2 << " ";
-        double t1 = i->getSensorDataTime()[0];
-        cout << t1 << " ";
-        double t2 = i->getSensorDataTime()[1];
-        cout << t2 << " ";
-        // Obtain current time
-        double t3 = (chrono::steady_clock::now()-initTime_).count();
-        cout << "current time: " << t3 << " ";
-        // Linearly interpolate current data
-        double data = ((v2-v1)/(t2-t1))*(t3-t2)+v2;
-        // If linearly interpolated data exceed the maximum or minimum range of sensor configuration
-        // Assign interpolated data as maximum/minimum sensor distance
-        if(data < i->getMin())
-            data = i->getMin();
-        if(data > i->getMax())
-            data = i->getMax();
-        // Store extrapolated data in a temporary for data fusion
-        tempData.push_back(data);
-        cout << "Interpolated result: "<< data << endl;
+        unique_lock<mutex> lck(mtx_);
+        // Base on processing method, choose either fuse at 3Hz or at every new data
+        if(processMethod_==1)
+        {
+            // Unlock lock to prevent lock while thread is sleeping
+            lck.unlock();
+            this_thread::sleep_for(chrono::milliseconds(fusionRate_));
+            lck.lock();
+        }
+        else
+        {
+            // Wait for other thread to notify there are new data been sampled
+            while(!dataGenerated)
+            {
+                cv.wait(lck);
+            }
+        }
+        // Create variables to temperary hold data to be compared
+        vector<double> tempData;
+        double maxValue = 0;
+        double minValue = 999;
+        double averageValue = 0;
+        double data = 0;
+        // Cycle through each sensor to obtain first two sensor data
+        // Extrapolate using two set of data to obtain current data
+        cout << "Interpolating: " << endl;
+        for(auto &i : rangers)
+        {
+            cout << "Interpolating data :";
+            // Extract newest two sensor data for interpolation
+            double v1 = i->getSensorData()[0];
+            cout << v1 << " ";
+            double v2 = i->getSensorData()[1];
+            cout << v2 << " ";
+            double t1 = i->getSensorDataTime()[0];
+            cout << t1 << " ";
+            double t2 = i->getSensorDataTime()[1];
+            cout << t2 << " ";
+            // Obtain current time since fusion object is initialised
+            double t3 = (chrono::steady_clock::now()-initTime_).count();
+            cout << "current time: " << t3 << " ";
+            // Linearly interpolate current data
+            double data = ((v2-v1)/(t2-t1))*(t3-t2)+v2;
+            // If linearly interpolated data exceed the maximum or minimum range of sensor configuration
+            // Assign interpolated data as maximum/minimum sensor distance
+            if(data < i->getMin())
+                data = i->getMin();
+            if(data > i->getMax())
+                data = i->getMax();
+            // Store extrapolated data in a temporary for data fusion
+            tempData.push_back(data);
+            cout << "Interpolated result: "<< data << endl;
+        }
+
+         switch(fusionMethod_)
+         {
+         // Fuse data base on its maximum sensor reading
+         case 1:
+             for(auto dataValue : tempData)
+             {
+                if(dataValue > maxValue)
+                   maxValue = dataValue;
+             }
+             data = maxValue;
+             break;
+
+         // Fuse data base on minimum sensor reading
+         case 2:
+             for(auto dataValue : tempData)
+             {
+                if(dataValue < minValue)
+                   minValue = dataValue;
+             }
+             data = minValue;
+             break;
+
+         // Fuse data base on average sensor reading
+         case 3:
+             for(auto dataValue : tempData)
+             {
+                if(dataValue > maxValue)
+                   averageValue += dataValue;
+             }
+             averageValue /= tempData.size();
+             data = averageValue;
+             break;
+         }
+         cout << "fusion output: " << data << endl << endl;
+         dataGenerated = false;
     }
-
-     switch(fusionMethod_)
-     {
-
-     // Fuse data base on its maximum sensor reading
-     case 1:
-         for(auto dataValue : tempData)
-         {
-            if(dataValue > maxValue)
-               maxValue = dataValue;
-         }
-         return maxValue;
-
-     // Fuse data base on minimum sensor reading
-     case 2:
-         for(auto dataValue : tempData)
-         {
-            if(dataValue < minValue)
-               minValue = dataValue;
-         }
-         return minValue;
-
-     // Fuse data base on average sensor reading
-     case 3:
-         for(auto dataValue : tempData)
-         {
-            if(dataValue > maxValue)
-               averageValue += dataValue;
-         }
-         averageValue /= tempData.size();
-         return averageValue;
-     }
-
 }

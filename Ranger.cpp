@@ -181,54 +181,62 @@ void Ranger::containerManagement(int limitNumber)
 {
     // If any of the data container goes above the number limit
     // Erase the oldest data set from both container
-    unique_lock<mutex> lock(mutex_);
-    if(data_.size() > limitNumber)
-        data_.pop_back();
-    if(dataTime_.size() > limitNumber)
-        dataTime_.pop_back();
+    while (1)
+    {
+        unique_lock<mutex> lock(mutex_);
+        if(data_.size() > limitNumber)
+            data_.pop_back();
+        if(dataTime_.size() > limitNumber)
+            dataTime_.pop_back();
+    }
 }
 
-void Ranger::sampleData()
+void Ranger::sampleData(condition_variable &cv, bool &dataGenerated)
 {
-    // Set thread to sleep at data sampling rate
-    this_thread::sleep_for(chrono::milliseconds(dataRate_));
-    unique_lock<mutex> lock(mutex_);
-    // Display sampled sensor model number
-    cout << model_<< ": " << endl;
-    double tempData = 0;
-    double omega = 2*pi*0.05;
-    // Only store data when data is within sensor ranage
-    while ((tempData < min_) || (tempData > max_))
+    while(1)
     {
-        // Generate a random seed
-        unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-        default_random_engine engine(seed);
-        // Use normal distrubution model to generate random number
-        normal_distribution<double> gaussianNoise(mean,standardDeviation);
-        double delta = gaussianNoise(engine);
-        // Calculate final sensor data
-        tempData = 6 + (4 * sin(omega+seed)) + delta;
-    }
-    // Obtain time which the sensor is generated
-    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
-    double time = (t2-initTime_).count();
-    // Store both data and time to sensor container
-    data_.push_front(tempData);
-    dataTime_.push_front(time);
+        // Set thread to sleep at data sampling rate
+        this_thread::sleep_for(chrono::milliseconds(dataRate_));
+        unique_lock<mutex> lock(mutex_);
+        // Display sampled sensor model number
+        cout << model_<< ": " << endl;
+        double tempData = 0;
+        double omega = 2*pi*0.05;
+        // Only store data when data is within sensor ranage
+        while ((tempData < min_) || (tempData > max_))
+        {
+            // Generate a random seed
+            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+            default_random_engine engine(seed);
+            // Use normal distrubution model to generate random number
+            normal_distribution<double> gaussianNoise(mean,standardDeviation);
+            double delta = gaussianNoise(engine);
+            // Calculate final sensor data
+            tempData = 6 + (4 * sin(omega+seed)) + delta;
+        }
+        // Obtain time which the sensor is generated
+        chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+        double time = (t2-initTime_).count();
+        // Store both data and time to sensor container
+        data_.push_front(tempData);
+        dataTime_.push_front(time);
 
-    // Display sampled sensor data
-    cout << "Data: ";
-    for(auto i : data_)
-    {
-        cout << i << " ";
-    }
-    cout << endl;
+        // Display sampled sensor data
+        cout << "Data: ";
+        for(auto i : data_)
+        {
+            cout << i << " ";
+        }
+        cout << endl;
 
-    // Display time frame of sampled sensor data
-    cout << "Time: ";
-    for(auto i : dataTime_)
-    {
-        cout << i << " ";
+        // Display time frame of sampled sensor data
+        cout << "Time: ";
+        for(auto i : dataTime_)
+        {
+            cout << i << " ";
+        }
+        cout << endl << endl;
+        cv.notify_all();
+        dataGenerated = true;
     }
-    cout << endl << endl;
 }

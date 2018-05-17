@@ -5,11 +5,9 @@
 #include <iostream>
 using namespace std;
 
-//! Data Fusion Class.
 /*!
  * \brief The DataFusion class is responsible to fuse sensor data.
- *
- * Data fusion will have different fusing methods and threading process method.
+ * DataFusion will have different fusing methods and threading process method.
  */
 
 class DataFusion{
@@ -17,6 +15,7 @@ private:
     int fusionMethod_;
     int processMethod_;
     int fusionRate_;
+    mutex mtx_;
     chrono::steady_clock::time_point initTime_;
 public:
 
@@ -67,9 +66,10 @@ public:
      * The data is then extrapolated to obtain current data at current time.
      * The extrapolated data is fused base on fusion method and return to the function call
      * \param rangers
-     * \return Fused data
+     * \param cv
+     * \param dataGenerated
      */
-    double fuseSensorData(vector<Ranger *> &rangers);
+    void fuseSensorData(vector<Ranger *> &rangers, condition_variable &cv, bool &dataGenerated);
     /*!
      * \brief dataFusionInterface is the user interface for change fusion method.
      * The function generate a user menu to set data fusion method.

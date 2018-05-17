@@ -1,7 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -14,11 +13,5 @@
 
 #define MAX_NUM_DATA 5
 using namespace std;
-
-
-
-void sampleSensor(Ranger&);
-
-
 
 #endif
