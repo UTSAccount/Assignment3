@@ -212,7 +212,7 @@ void Ranger::sampleData(condition_variable &cv, bool &dataGenerated)
             normal_distribution<double> gaussianNoise(mean,standardDeviation);
             double delta = gaussianNoise(engine);
             // Calculate final sensor data
-            tempData = 6 + (4 * sin(omega+seed)) + delta;
+            tempData = 6 + (4 * sin(omega*seed)) + delta;
         }
         // Obtain time which the sensor is generated
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
